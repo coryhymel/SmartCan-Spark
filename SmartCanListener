@@ -1,0 +1,62 @@
+/*
+PROJECT: SmartCan
+
+This application is used to send data (char) received through serial (RX pin) to
+a webpage running JavaScript with an open SSE event stream.
+
+Created by Cory Hymel on 6/9/14.
+Copyright (c) 2014 Enventys. All rights reserved.
+*/
+
+// Buffer to store incoming commands from serial port
+String inData;
+
+bool isReadingData;
+
+void setup() {
+    delay(1000);
+
+    //RX pin is Serial1, TX would be Serial
+    Serial1.begin(9600);
+}
+
+/*
+Publish a given string to SSE event stream.
+@param value The string value to publish
+*/
+void printValueToServer (String value) {
+    Spark.publish("Uptime",value);
+}
+
+void loop() {
+
+    char recieved;
+
+    while (Serial1.available() > 0)
+    {
+
+        recieved = Serial1.read();
+
+        //The reader sends a '\n''j' after each read, so we can just return after we see a 'j'
+        if (recieved == 'j') {
+            inData = "";
+            return;
+        }
+
+        // Process message when new line character is recieved
+        if (recieved == '\n')
+        {
+            //Spark.publish("Uptime", inData);
+            printValueToServer(inData);
+
+            delay(1000);
+
+            inData = ""; // Clear recieved buffer
+        }
+
+        //We are getting the barcode so append to inData
+        else {
+            inData += recieved;
+        }
+    }
+}
